@@ -41,6 +41,9 @@ export default function Profile({ user, onLogout, onUpdate }) {
     currentPassword: '', newPassword: '', confirmPassword: '',
     emailNotif: true, pushNotif: false, orderUpdates: true, promotions: false,
   });
+  const passwordsDoNotMatch = Boolean(
+    form.newPassword && form.newPassword !== form.confirmPassword
+  );
 
   useEffect(() => {
     if (user) {
@@ -115,24 +118,38 @@ export default function Profile({ user, onLogout, onUpdate }) {
     }
   };
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
+  const handleChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    if (name === 'newPassword' || name === 'confirmPassword') {
+      setError('');
+      setSuccess('');
+    }
+  };
 
   const handleSave = async () => {
-    setLoading(true);
     setError('');
     setSuccess('');
+
+    if (activeTab === 'security') {
+      if (form.newPassword && form.newPassword !== form.confirmPassword) {
+        setError('New passwords do not match');
+        return;
+      }
+      if (!form.currentPassword || !form.newPassword) {
+        setError('Please fill in all password fields');
+        return;
+      }
+    }
+
+    setLoading(true);
     try {
       if (activeTab === 'security') {
-        if (!form.currentPassword || !form.newPassword) {
-          throw new Error('Please fill in all password fields');
-        }
-        if (form.newPassword !== form.confirmPassword) {
-          throw new Error('New passwords do not match');
-        }
         const res = await axios.put(`${API_URL}/api/auth/updatepassword`, 
           { currentPassword: form.currentPassword, newPassword: form.newPassword },
           { withCredentials: true }
         );
+        if (!res.data.success) throw new Error(res.data.message || 'Password update failed');
         setSuccess('Password updated successfully!');
         setForm(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
       } else {
@@ -469,6 +486,8 @@ export default function Profile({ user, onLogout, onUpdate }) {
                         value={form.newPassword} 
                         onChange={handleChange} 
                         className="profile-input" 
+                        aria-invalid={passwordsDoNotMatch}
+                        aria-describedby={passwordsDoNotMatch ? 'password-mismatch-message' : undefined}
                       />
                       <button className="pass-toggle" onClick={() => setShowNewPass(!showNewPass)}>
                         {showNewPass ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -484,6 +503,8 @@ export default function Profile({ user, onLogout, onUpdate }) {
                         value={form.confirmPassword} 
                         onChange={handleChange} 
                         className="profile-input" 
+                        aria-invalid={passwordsDoNotMatch}
+                        aria-describedby={passwordsDoNotMatch ? 'password-mismatch-message' : undefined}
                       />
                       <button className="pass-toggle" onClick={() => setShowConfirmPass(!showConfirmPass)}>
                         {showConfirmPass ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -491,6 +512,11 @@ export default function Profile({ user, onLogout, onUpdate }) {
                     </div>
                   </div>
                 </div>
+                {passwordsDoNotMatch && (
+                  <p id="password-mismatch-message" className="password-mismatch-message" role="alert">
+                    The new passwords do not match.
+                  </p>
+                )}
                 <button className="profile-save-btn" onClick={handleSave} disabled={loading}>
                   {loading ? 'Updating...' : 'Update Password'}
                 </button>

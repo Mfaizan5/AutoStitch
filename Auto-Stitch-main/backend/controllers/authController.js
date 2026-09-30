@@ -688,6 +688,8 @@ const resetPassword = async (req, res) => {
     user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
     await user.save();
 
     sendTokenResponse(user, 200, res);

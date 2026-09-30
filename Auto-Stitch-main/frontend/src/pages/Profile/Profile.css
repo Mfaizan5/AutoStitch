@@ -133,6 +133,16 @@
   border-bottom-color: var(--color-text-primary);
 }
 
+.profile-input[aria-invalid="true"] {
+  border-bottom-color: #c62828;
+}
+
+.password-mismatch-message {
+  margin: -8px 0 var(--space-lg);
+  color: #c62828;
+  font-size: 0.875rem;
+}
+
 .profile-select {
   width: 100%;
   padding: 10px 0;
