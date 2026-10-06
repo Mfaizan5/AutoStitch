@@ -27,6 +27,18 @@ const loginSchema = z.object({
   portal: z.enum(['customer', 'boutique', 'admin']).optional().default('customer'),
 });
 
+const findUserForPasswordReset = async (role, email) => {
+  const Model = getUserModel(role);
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await Model.findOne({ email: normalizedEmail });
+
+  if (user) {
+    return user;
+  }
+
+  return User.findOne({ email: normalizedEmail, role });
+};
+
 // Generate tokens
 const generateTokens = (id, role) => {
   const accessToken = jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -139,7 +151,8 @@ const login = async (req, res) => {
       const errors = parsed.error.issues.map(i => i.message).join(', ');
       return res.status(400).json({ success: false, message: errors });
     }
-    const { email, password, portal, captchaToken } = req.body;
+    const { email, password, portal } = parsed.data;
+    const { captchaToken } = req.body;
 
     // Verify reCAPTCHA if configured
     if (process.env.RECAPTCHA_SECRET_KEY && captchaToken && captchaToken !== 'bypass-recaptcha') {
@@ -572,8 +585,7 @@ const forgotPassword = async (req, res) => {
   try {
     const { email, role = 'customer' } = req.body;
 
-    const Model = getUserModel(role);
-    const user = await Model.findOne({ email });
+    const user = await findUserForPasswordReset(role, email);
 
     if (!user) {
       return res.status(200).json({ success: true, message: 'If an account exists with that email, a verification OTP has been sent' });
@@ -642,14 +654,13 @@ const verifyOTP = async (req, res) => {
       .update(otp)
       .digest('hex');
 
-    const Model = getUserModel(role);
-    const user = await Model.findOne({
-      email,
-      resetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
+    const user = await findUserForPasswordReset(role, email);
+    const matchingUser = user && user.resetPasswordToken === resetPasswordToken
+      && user.resetPasswordExpire > Date.now()
+      ? user
+      : null;
 
-    if (!user) {
+    if (!matchingUser) {
       return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
@@ -673,26 +684,25 @@ const resetPassword = async (req, res) => {
       .update(otp)
       .digest('hex');
 
-    const Model = getUserModel(role);
-    const user = await Model.findOne({
-      email,
-      resetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
+    const user = await findUserForPasswordReset(role, email);
+    const matchingUser = user && user.resetPasswordToken === resetPasswordToken
+      && user.resetPasswordExpire > Date.now()
+      ? user
+      : null;
 
-    if (!user) {
+    if (!matchingUser) {
       return res.status(400).json({ success: false, message: 'Invalid or expired OTP session' });
     }
 
     // Set new password
-    user.password = password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    user.loginAttempts = 0;
-    user.lockUntil = undefined;
-    await user.save();
+    matchingUser.password = password;
+    matchingUser.resetPasswordToken = undefined;
+    matchingUser.resetPasswordExpire = undefined;
+    matchingUser.loginAttempts = 0;
+    matchingUser.lockUntil = undefined;
+    await matchingUser.save();
 
-    sendTokenResponse(user, 200, res);
+    sendTokenResponse(matchingUser, 200, res);
   } catch (error) {
     console.error('Reset password error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -874,4 +884,3 @@ module.exports = {
   disable2FA,
   validateLogin2FA
 };
-

@@ -31,14 +31,20 @@ export default function Chatbot() {
     setIsLoading(true);
 
     try {
-      const { data } = await axios.post(`${API_URL}/api/chatbot`, { message: input });
+      const history = messages
+        .slice(1)
+        .map(({ role, content }) => ({ role, content }));
+      const { data } = await axios.post(`${API_URL}/api/chatbot`, { message: input, history });
       if (data.success) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
       } else {
         throw new Error('Failed to get reply');
       }
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having a bit of trouble connecting. Please try again later." }]);
+      const errorMessage = axios.isAxiosError(error) && typeof error.response?.data?.message === 'string'
+        ? error.response.data.message
+        : "Sorry, I'm having a bit of trouble connecting. Please try again later.";
+      setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
     } finally {
       setIsLoading(false);
     }

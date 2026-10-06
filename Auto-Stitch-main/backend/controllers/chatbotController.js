@@ -2,45 +2,63 @@ const OpenAI = require('openai');
 const Product = require('../models/Product');
 const Boutique = require('../models/Boutique');
 
+const getConversationHistory = (history) => {
+  if (!Array.isArray(history)) {
+    return [];
+  }
+
+  return history
+    .filter((turn) => (
+      turn
+      && (turn.role === 'user' || turn.role === 'assistant')
+      && typeof turn.content === 'string'
+      && turn.content.trim()
+    ))
+    .slice(-10)
+    .map(({ role, content }) => ({ role, content: content.trim().slice(0, 1000) }));
+};
+
 // @desc    Get chatbot response (RAG)
 // @route   POST /api/chatbot
 // @access  Public
 const getChatbotResponse = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, history } = req.body;
 
-    // Initialize Groq (using OpenAI SDK compatibility)
+    if (typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ success: false, message: 'Message is required' });
+    }
+
     if (!process.env.GROQ_API_KEY) {
-      return res.status(500).json({ success: false, message: 'Groq API Key missing. Please check backend .env file.' });
+      return res.status(503).json({ success: false, message: 'Chatbot is temporarily unavailable.' });
     }
 
     const groq = new OpenAI({
       apiKey: process.env.GROQ_API_KEY,
-      baseURL: "https://api.groq.com/openai/v1",
+      baseURL: 'https://api.groq.com/openai/v1',
     });
 
-    if (!message) {
-      return res.status(400).json({ success: false, message: 'Message is required' });
-    }
-
     // 1. Search DB for relevant context
-    const keywords = message.split(' ').filter(word => word.length > 3);
+    const keywords = message.trim().split(/\s+/).filter(word => word.length > 3);
 
     let context = '';
 
     if (keywords.length > 0) {
+      const keywordPattern = keywords
+        .map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('|');
       const productQuery = {
         $or: [
-          { name: { $regex: keywords.join('|'), $options: 'i' } },
-          { description: { $regex: keywords.join('|'), $options: 'i' } },
-          { category: { $regex: keywords.join('|'), $options: 'i' } }
+          { name: { $regex: keywordPattern, $options: 'i' } },
+          { description: { $regex: keywordPattern, $options: 'i' } },
+          { category: { $regex: keywordPattern, $options: 'i' } }
         ]
       };
 
       const boutiqueQuery = {
         $or: [
-          { name: { $regex: keywords.join('|'), $options: 'i' } },
-          { description: { $regex: keywords.join('|'), $options: 'i' } }
+          { name: { $regex: keywordPattern, $options: 'i' } },
+          { description: { $regex: keywordPattern, $options: 'i' } }
         ]
       };
 
@@ -79,15 +97,10 @@ Instructions:
 - Keep answers concise (max 3-4 sentences).
 - If you don't know something, suggest they contact our support or visit the Contact page.`;
 
-    const candidateModels = [
-      "llama-3.3-70b-versatile",
-      "llama-3.1-8b-instant",
-      "mixtral-8x7b-32768",
-      "gemma2-9b-it"
-    ];
+    const candidateModels = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
+    const conversationHistory = getConversationHistory(history);
 
     let completion = null;
-    let lastError = null;
 
     for (const modelName of candidateModels) {
       try {
@@ -95,7 +108,8 @@ Instructions:
           model: modelName,
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: message },
+            ...conversationHistory,
+            { role: "user", content: message.trim() },
           ],
           temperature: 0.7,
           max_tokens: 300,
@@ -104,7 +118,6 @@ Instructions:
           break;
         }
       } catch (err) {
-        lastError = err;
         console.log(`[Groq] Model ${modelName} notice: ${err.message}, trying next candidate...`);
       }
     }
@@ -113,18 +126,10 @@ Instructions:
       return res.json({ success: true, reply: completion.choices[0].message.content });
     }
 
-    // Intelligent Fallback if API keys or rate limits occur
-    const lower = message.toLowerCase();
-    let smartReply = "Welcome to Auto Stitch! You can explore luxury designer pret, custom tailoring, and try on clothes instantly in our Virtual Try-On Studio.";
-    if (lower.includes('try on') || lower.includes('virtual') || lower.includes('vto')) {
-      smartReply = "You can use our Virtual Try-On feature on any product page or in our Full Studio (/try-on) to see how any outfit drapes on your photo with 100% privacy!";
-    } else if (lower.includes('custom') || lower.includes('tailor') || lower.includes('stitch')) {
-      smartReply = "Our Customization Studio allows you to submit measurements and special design requests. Registered boutiques will place competitive bids on your order!";
-    } else if (lower.includes('boutique') || lower.includes('designer') || lower.includes('brand')) {
-      smartReply = "We partner with premier fashion houses including Élan, Maria.B, Suffuse, Sana Safinaz, and many more. Visit the Boutiques tab to view their full collections.";
-    }
-
-    res.json({ success: true, reply: smartReply });
+    return res.status(503).json({
+      success: false,
+      message: 'Chatbot is temporarily unavailable. Please try again shortly.',
+    });
   } catch (error) {
     console.error('Groq Chatbot Error:', error);
     res.status(500).json({ success: false, message: 'I am having trouble stitching together an answer right now. Please try again later.' });

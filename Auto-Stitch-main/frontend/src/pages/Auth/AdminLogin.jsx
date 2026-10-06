@@ -112,6 +112,13 @@ export default function AdminLogin({ onLogin }) {
                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              <Link
+                to="/forgot-password?role=admin"
+                className="create-account-link"
+                style={{ display: 'inline-block', marginTop: '8px' }}
+              >
+                Forgot password? Reset it here
+              </Link>
             </div>
 
             {import.meta.env.VITE_RECAPTCHA_SITE_KEY && (

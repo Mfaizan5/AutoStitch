@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import API_URL from '../../config/api';
@@ -7,10 +7,11 @@ import './MinimalAuth.css';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
   
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('customer');
+  const [role, setRole] = useState(() => searchParams.get('role') === 'admin' ? 'admin' : 'customer');
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -66,7 +67,7 @@ export default function ForgotPassword() {
     try {
       await axios.put(`${API_URL}/api/auth/resetpassword`, { email, role, otp, password });
       toast.success('Password updated successfully!');
-      navigate('/login');
+      navigate(role === 'admin' ? '/admin-login' : role === 'boutique_owner' ? '/boutique-login' : '/login');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to reset password');
     } finally {
@@ -105,7 +106,12 @@ export default function ForgotPassword() {
               {isSubmitting ? 'Sending...' : 'Send OTP'}
             </button>
             <div className="minimal-auth-footer">
-              <Link to="/login" className="minimal-cancel-link">Back to Login</Link>
+              <Link
+                to={role === 'admin' ? '/admin-login' : role === 'boutique_owner' ? '/boutique-login' : '/login'}
+                className="minimal-cancel-link"
+              >
+                Back to Login
+              </Link>
             </div>
           </form>
         )}
