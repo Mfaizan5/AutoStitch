@@ -117,7 +117,7 @@ export default function BoutiqueBids() {
                     alignItems: 'center'
                   }}
                 >
-                  <img 
+                  <img loading="lazy" decoding="async" 
                     src={req.product?.images?.[0] || req.referenceImages?.[0] || getFallbackImage(req._id)} 
                     alt="" 
                     style={{ width: '60px', height: '80px', objectFit: 'cover', filter: selectedRequest?._id === req._id ? 'brightness(0.9)' : 'none' }}
@@ -164,7 +164,7 @@ export default function BoutiqueBids() {
 
                 <div className="request-preview-comparison" style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: '3rem', marginBottom: '4rem' }}>
                   <div className="req-img-card">
-                    <img 
+                    <img loading="lazy" decoding="async" 
                       src={selectedRequest.product?.images?.[0] || selectedRequest.referenceImages?.[0] || getFallbackImage(selectedRequest._id)} 
                       alt="" 
                       style={{ width: '100%', borderRadius: '0', border: '1px solid #eee' }} 

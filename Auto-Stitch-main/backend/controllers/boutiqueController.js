@@ -66,7 +66,7 @@ const getMyBoutique = async (req, res) => {
 // @access  Private (Boutique Owner)
 const submitBoutiqueKyc = async (req, res) => {
   try {
-    const { cnic, businessCertificate, notes, name, description, address, contact } = req.body;
+    const { cnic, businessCertificate, shopImage, notes, name, description, address, contact } = req.body;
 
     if (!cnic) {
       return res.status(400).json({ success: false, message: 'National CNIC number is required' });
@@ -91,6 +91,7 @@ const submitBoutiqueKyc = async (req, res) => {
       status: 'pending',
       cnic: cleanCnic,
       businessCertificate: (businessCertificate !== undefined ? businessCertificate : (boutique.kyc?.businessCertificate || '')).trim(),
+      shopImage: (shopImage !== undefined ? shopImage : (boutique.kyc?.shopImage || '')).trim(),
       submittedAt: new Date(),
       reviewNotes: (notes || 'Submitted for administrator verification').trim()
     };

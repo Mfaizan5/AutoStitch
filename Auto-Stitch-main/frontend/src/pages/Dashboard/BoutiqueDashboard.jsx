@@ -342,7 +342,7 @@ export function BoutiqueDashboard({ user }) {
                     alignItems: 'center', padding: '1.5rem', gap: '1rem',
                     borderBottom: i < products.length - 1 ? '1px solid #f5f5f5' : 'none'
                   }}>
-                    <img src={p.images?.[0] || 'https://via.placeholder.com/60x80'} alt={p.name} style={{ width: '60px', height: '80px', objectFit: 'cover' }} />
+                    <img loading="lazy" decoding="async" src={p.images?.[0] || 'https://via.placeholder.com/60x80'} alt={p.name} style={{ width: '60px', height: '80px', objectFit: 'cover' }} />
                     <div>
                       <p style={{ fontWeight: '600', fontSize: '0.9rem' }}>{p.name}</p>
                       <p style={{ fontSize: '0.75rem', color: '#999' }}>{p.category}</p>

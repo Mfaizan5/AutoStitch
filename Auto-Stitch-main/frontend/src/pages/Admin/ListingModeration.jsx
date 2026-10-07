@@ -31,8 +31,24 @@ export default function ListingModeration() {
     fetchListings();
   }, [filter, selectedBoutiqueId]);
 
-  const fetchBoutiques = async () => {
-    setLoadingBoutiques(true);
+  // Pick up newly submitted products without a manual reload:
+  // refresh quietly every 15s and whenever the tab regains focus.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.hidden) return;
+      fetchListings(true);
+      fetchBoutiques(true);
+    };
+    const timer = setInterval(refresh, 15000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [filter, selectedBoutiqueId]);
+
+  const fetchBoutiques = async (silent = false) => {
+    if (!silent) setLoadingBoutiques(true);
     try {
       const res = await axios.get(`${API_URL}/api/admin/boutiques`, { withCredentials: true });
       if (res.data.success) {
@@ -45,8 +61,8 @@ export default function ListingModeration() {
     }
   };
 
-  const fetchListings = async () => {
-    setLoading(true);
+  const fetchListings = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const url = `${API_URL}/api/admin/products?status=${filter}&boutiqueId=${selectedBoutiqueId}`;
       const res = await axios.get(url, { withCredentials: true });
@@ -140,7 +156,7 @@ export default function ListingModeration() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem',
                 fontFamily: 'Playfair Display, serif', overflow: 'hidden', border: '1px solid #e5e5e5'
               }}>
-                {currentStore.logo ? <img src={currentStore.logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : currentStore.name?.charAt(0)}
+                {currentStore.logo ? <img loading="lazy" decoding="async" src={currentStore.logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : currentStore.name?.charAt(0)}
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -265,7 +281,7 @@ export default function ListingModeration() {
             filtered.map(l => (
               <div key={l._id} className="product-card-premium" style={{ background: '#fff', border: '1px solid #e5e5e5', marginBottom: '12px', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <div className="pc-image-wrap" style={{ width: '75px', height: '95px', flexShrink: 0, borderRadius: '2px', overflow: 'hidden', background: '#f5f5f5' }}>
-                  <img 
+                  <img loading="lazy" decoding="async" 
                     src={getImageUrl(l.images?.[0])} 
                     alt={l.name} 
                     className="pc-image" 
@@ -371,7 +387,7 @@ export default function ListingModeration() {
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '2.5rem' }}>
               <div className="product-image-side">
-                <img 
+                <img loading="lazy" decoding="async" 
                   src={getImageUrl(selectedProduct.images?.[activeImageIndex])} 
                   alt={selectedProduct.name} 
                   style={{ width: '100%', height: '380px', objectFit: 'cover', border: '1px solid #eee', borderRadius: '2px' }} 
@@ -379,7 +395,7 @@ export default function ListingModeration() {
                 />
                 <div className="upload-preview-grid" style={{ marginTop: '1rem', display: 'flex', gap: '10px', overflowX: 'auto' }}>
                   {selectedProduct.images?.map((img, i) => (
-                    <img 
+                    <img loading="lazy" decoding="async" 
                       key={i} 
                       src={getImageUrl(img)} 
                       onClick={() => setActiveImageIndex(i)}

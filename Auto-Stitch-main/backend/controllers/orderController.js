@@ -16,6 +16,21 @@ const orderItemSchema = z.object({
   boutique: z.string().optional(),
 });
 
+// Simulated card payments, used when Stripe is not configured (demo / development only)
+const isMockPaymentEnabled = () =>
+  !stripe && process.env.NODE_ENV !== 'production' && process.env.MOCK_PAYMENTS !== 'false';
+
+const buildInstallments = (total) => {
+  const shares = [0.4, 0.3, 0.3];
+  const amounts = shares.map((sh) => Math.round(total * sh));
+  amounts[2] += total - amounts.reduce((a, b) => a + b, 0);
+  return amounts.map((amount, i) => ({
+    amount,
+    dueDate: new Date(Date.now() + i * 14 * 86400000),
+    status: 'pending',
+  }));
+};
+
 const createOrderSchema = z.object({
   items: z.array(orderItemSchema).min(1, 'At least one item is required'),
   boutique: z.string().optional(),
@@ -94,6 +109,11 @@ const createOrder = async (req, res) => {
 
     const { items, shippingAddress, paymentMethod, itemsTotal, shippingCost, discount, total, couponCode, notes } = parsed.data;
 
+    const isOnlinePayment = ['card', 'stripe_full', 'stripe_installment'].includes(paymentMethod);
+    if (isOnlinePayment && !stripe && !isMockPaymentEnabled()) {
+      return res.status(400).json({ success: false, message: 'Stripe payment is not configured on this server. Please select Cash on Delivery (COD).' });
+    }
+
     const order = await Order.create({
       customer: req.user._id,
       boutique: items[0].boutique || parsed.data.boutique,
@@ -108,7 +128,8 @@ const createOrder = async (req, res) => {
       notes,
       statusHistory: [{ status: 'placed', note: 'Order placed successfully' }],
       installmentPlan: {
-        enabled: paymentMethod === 'stripe_installment'
+        enabled: paymentMethod === 'stripe_installment',
+        installments: paymentMethod === 'stripe_installment' ? buildInstallments(total) : []
       }
     });
 
@@ -130,10 +151,12 @@ const createOrder = async (req, res) => {
 
     let stripeSessionUrl = null;
 
-    if (['card', 'stripe_full', 'stripe_installment'].includes(paymentMethod)) {
-      if (!stripe) {
-        return res.status(400).json({ success: false, message: 'Stripe payment is not configured on this server. Please select Cash on Delivery (COD).' });
-      }
+    if (isOnlinePayment && !stripe) {
+      // Simulated checkout: the client shows a mock card form, then calls /:id/mock-pay
+      return res.status(201).json({ success: true, order, stripeSessionUrl: null, mockPaymentRequired: true });
+    }
+
+    if (isOnlinePayment) {
       const line_items = items.map(item => ({
         price_data: {
           currency: 'usd',
@@ -589,6 +612,58 @@ const payInstallment = async (req, res) => {
   }
 };
 
+// @desc    Complete a simulated card payment (no real charge) when Stripe is not configured
+// @route   POST /api/orders/:id/mock-pay
+// @access  Private (customer)
+const mockPayOrder = async (req, res) => {
+  try {
+    if (!isMockPaymentEnabled()) {
+      return res.status(400).json({ success: false, message: 'Simulated payments are not enabled.' });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+    if (order.paymentMethod === 'cod') {
+      return res.status(400).json({ success: false, message: 'This order is Cash on Delivery.' });
+    }
+    if (order.paymentStatus === 'paid') {
+      return res.json({ success: true, message: 'Order is already paid', order });
+    }
+
+    if (order.installmentPlan?.enabled) {
+      const installments = order.installmentPlan.installments;
+      const requested = req.body?.installmentIndex;
+      const index = requested !== undefined && requested !== null
+        ? parseInt(requested, 10)
+        : installments.findIndex((inst) => inst.status !== 'paid');
+      if (!installments[index]) {
+        return res.status(400).json({ success: false, message: 'Invalid installment index' });
+      }
+      if (installments[index].status !== 'paid') {
+        installments[index].status = 'paid';
+        installments[index].paidAt = new Date();
+      }
+      if (installments.every((inst) => inst.status === 'paid')) {
+        order.paymentStatus = 'paid';
+      }
+      order.statusHistory.push({ status: order.status || 'placed', note: `Installment #${index + 1} paid (simulated card payment)` });
+    } else {
+      order.paymentStatus = 'paid';
+      order.statusHistory.push({ status: order.status || 'placed', note: 'Payment received (simulated card payment)' });
+    }
+
+    await order.save();
+    res.json({ success: true, message: 'Simulated payment successful', order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 // @desc    Create Stripe Checkout Session for individual installment milestone
 // @route   POST /api/orders/:id/installments/:installmentIndex/stripe-session
 // @access  Private (Customer)
@@ -616,6 +691,9 @@ const createInstallmentStripeSession = async (req, res) => {
     }
 
     if (!stripe) {
+      if (isMockPaymentEnabled()) {
+        return res.json({ success: true, mockPaymentRequired: true });
+      }
       return res.status(400).json({ success: false, message: 'Stripe payments are not configured on this server.' });
     }
 
@@ -789,6 +867,7 @@ module.exports = {
   handleStripeWebhook,
   payInstallment,
   createInstallmentStripeSession,
+  mockPayOrder,
   requestOrderReturn,
   reviewOrderReturn
 };

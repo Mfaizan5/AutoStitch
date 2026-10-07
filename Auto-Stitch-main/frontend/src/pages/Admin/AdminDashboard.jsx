@@ -390,6 +390,20 @@ export default function AdminDashboard() {
                                 )}
                               </div>
                             )}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ color: '#64748b', fontWeight: 600 }}>Shop / Visiting Image:</span>
+                              {boutique.kyc?.shopImage ? (
+                                <a href={boutique.kyc.shopImage} target="_blank" rel="noopener noreferrer" title="Open full size">
+                                  <img
+                                    src={boutique.kyc.shopImage}
+                                    alt={`${boutique.name} shop or visiting card`}
+                                    style={{ width: '160px', maxHeight: '110px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e2e8f0', display: 'block' }}
+                                  />
+                                </a>
+                              ) : (
+                                <span style={{ color: '#b45309', fontStyle: 'italic' }}>Not attached</span>
+                              )}
+                            </div>
                             {boutique.kyc?.reviewNotes && (
                               <div style={{ color: '#64748b', fontStyle: 'italic', fontSize: '0.72rem' }}>
                                 Note: {boutique.kyc.reviewNotes}

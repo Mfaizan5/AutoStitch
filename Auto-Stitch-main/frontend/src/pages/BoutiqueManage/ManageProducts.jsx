@@ -222,7 +222,7 @@ export default function ManageProducts() {
             filtered.map(p => (
               <div key={p._id} className="product-card-premium">
                 <div className="pc-image-wrap">
-                  <img src={p.images?.[0] || 'https://via.placeholder.com/80x100'} alt={p.name} className="pc-image" />
+                  <img loading="lazy" decoding="async" src={p.images?.[0] || 'https://via.placeholder.com/80x100'} alt={p.name} className="pc-image" />
                 </div>
                 
                 <div className="pc-info-main">
@@ -318,7 +318,7 @@ export default function ManageProducts() {
                   {formData.images.map((img, idx) => (
                     img && (
                       <div key={idx} className="upload-preview-item">
-                        <img src={img} alt={`Preview ${idx}`} />
+                        <img loading="lazy" decoding="async" src={img} alt={`Preview ${idx}`} />
                         <div className="upload-remove-badge" onClick={() => removeImageField(idx)}>
                           <X size={10} />
                         </div>

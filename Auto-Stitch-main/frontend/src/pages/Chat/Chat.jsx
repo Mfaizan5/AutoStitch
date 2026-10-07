@@ -20,6 +20,18 @@ export default function Chat() {
   const customerId = searchParams.get('customerId');
   const customerName = searchParams.get('customerName');
   
+  // Some chat links only carry boutiqueId, so look up the owner's user ID when ownerId is missing
+  const [resolvedOwnerId, setResolvedOwnerId] = useState('');
+  useEffect(() => {
+    if (!boutiqueId || searchParams.get('ownerId')) return;
+    axios.get(`${API_URL}/api/boutiques/${boutiqueId}`)
+      .then(res => {
+        const owner = res.data?.data?.owner;
+        setResolvedOwnerId(owner?._id || owner || '');
+      })
+      .catch(() => {});
+  }, [boutiqueId]);
+
   const [conversations, setConversations] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -230,7 +242,7 @@ export default function Chat() {
       setIsTyping(false);
     }
 
-    const ownerId = searchParams.get('ownerId');
+    const ownerId = searchParams.get('ownerId') || resolvedOwnerId;
     const customerIdParam = searchParams.get('customerId');
     const activeOtherUserId = typeof activeChat.otherUser === 'string' ? activeChat.otherUser : activeChat.otherUser?._id;
     const receiverId = activeOtherUserId === 'new' ? (ownerId || customerIdParam) : activeOtherUserId;
@@ -302,7 +314,7 @@ export default function Chat() {
 
     const quoteContent = `🏷️ [OFFICIAL QUOTATION] ${quoteForm.description} — PKR ${Number(quoteForm.price).toLocaleString()} (${quoteForm.timeline} Days Delivery). Notes: ${quoteForm.notes}`;
     
-    const ownerId = searchParams.get('ownerId');
+    const ownerId = searchParams.get('ownerId') || resolvedOwnerId;
     const customerIdParam = searchParams.get('customerId');
     const activeOtherUserId = typeof activeChat.otherUser === 'string' ? activeChat.otherUser : activeChat.otherUser?._id;
     const receiverId = activeOtherUserId === 'new' ? (ownerId || customerIdParam) : activeOtherUserId;
@@ -381,7 +393,7 @@ export default function Chat() {
   };
 
   const sendAttachment = async (attachmentUrl) => {
-    const ownerId = searchParams.get('ownerId');
+    const ownerId = searchParams.get('ownerId') || resolvedOwnerId;
     const customerIdParam = searchParams.get('customerId');
     const activeOtherUserId = typeof activeChat.otherUser === 'string' ? activeChat.otherUser : activeChat.otherUser?._id;
     const receiverId = activeOtherUserId === 'new' ? (ownerId || customerIdParam) : activeOtherUserId;
@@ -483,7 +495,7 @@ export default function Chat() {
                     onClick={() => setActiveChat(conv)}
                   >
                     <div className="conv-avatar" style={{ background: '#1a1a2e', color: '#fff' }}>
-                      {conv.boutique?.logo ? <img src={conv.boutique.logo} alt="" /> : conv.otherUser?.name?.charAt(0) || '?'}
+                      {conv.boutique?.logo ? <img loading="lazy" decoding="async" src={conv.boutique.logo} alt="" /> : conv.otherUser?.name?.charAt(0) || '?'}
                     </div>
                     <div className="conv-info">
                       <div className="conv-header">
@@ -516,7 +528,7 @@ export default function Chat() {
                     <ArrowLeft size={18} />
                   </button>
                   <div className="active-avatar" style={{ background: '#1a1a2e', color: '#fff' }}>
-                    {activeChat?.boutique?.logo ? <img src={activeChat.boutique.logo} alt="" /> : activeChat?.otherUser?.name?.charAt(0) || '?'}
+                    {activeChat?.boutique?.logo ? <img loading="lazy" decoding="async" src={activeChat.boutique.logo} alt="" /> : activeChat?.otherUser?.name?.charAt(0) || '?'}
                   </div>
                   <div>
                     <h3 style={{ margin: 0, fontSize: '1.05rem', fontFamily: 'Playfair Display, serif' }}>
@@ -592,7 +604,7 @@ export default function Chat() {
                             {/* Specific Garment Picture */}
                             {quoteImage && (
                               <div style={{ marginBottom: '10px', borderRadius: '4px', overflow: 'hidden', maxHeight: '180px' }}>
-                                <img 
+                                <img loading="lazy" decoding="async" 
                                   src={quoteImage} 
                                   alt="Custom Cloth" 
                                   style={{ width: '100%', height: '180px', objectFit: 'cover', display: 'block' }}
@@ -647,7 +659,7 @@ export default function Chat() {
                             {msg.attachment && (
                               <div style={{ marginBottom: '8px' }}>
                                 <a href={msg.attachment} target="_blank" rel="noopener noreferrer">
-                                  <img src={msg.attachment} alt="Attachment" style={{ maxWidth: '220px', borderRadius: '2px', cursor: 'pointer' }} />
+                                  <img loading="lazy" decoding="async" src={msg.attachment} alt="Attachment" style={{ maxWidth: '220px', borderRadius: '2px', cursor: 'pointer' }} />
                                 </a>
                               </div>
                             )}
@@ -800,7 +812,7 @@ export default function Chat() {
                 </div>
                 {quoteForm.image && (
                   <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <img src={quoteForm.image} alt="Preview" style={{ width: '48px', height: '60px', objectFit: 'cover', borderRadius: '2px', border: '1px solid #eee' }} />
+                    <img loading="lazy" decoding="async" src={quoteForm.image} alt="Preview" style={{ width: '48px', height: '60px', objectFit: 'cover', borderRadius: '2px', border: '1px solid #eee' }} />
                     <span style={{ fontSize: '0.75rem', color: '#16a34a' }}>✓ Exact garment picture attached</span>
                   </div>
                 )}

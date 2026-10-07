@@ -263,7 +263,17 @@ export default function Login({ onLogin }) {
               <div className="auth-separator-v2">Or</div>
 
               <div className="social-login-group-v2">
-                <button type="button" className="social-btn-v2" onClick={() => loginWithGoogle()}>
+                <button
+                  type="button"
+                  className="social-btn-v2"
+                  onClick={() => {
+                    if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+                      setError('Google sign-in is not configured yet. Please sign in with your email and password.');
+                      return;
+                    }
+                    loginWithGoogle();
+                  }}
+                >
                   <FaGoogle />
                   <span>Continue with Google</span>
                 </button>

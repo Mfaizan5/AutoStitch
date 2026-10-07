@@ -13,6 +13,7 @@ const {
   handleStripeWebhook,
   payInstallment,
   createInstallmentStripeSession,
+  mockPayOrder,
   requestOrderReturn,
   reviewOrderReturn
 } = require('../controllers/orderController');
@@ -29,6 +30,7 @@ router.post('/track', trackOrderLimiter, trackOrder);
 router.get('/', protect, authorize('customer'), getMyOrders);
 router.post('/', protect, authorize('customer'), createOrder);
 router.post('/:id/verify-payment', protect, verifyOrderPayment);
+router.post('/:id/mock-pay', protect, authorize('customer'), mockPayOrder);
 router.post('/:id/installments/:installmentIndex/pay', protect, authorize('customer'), payInstallment);
 router.post('/:id/installments/:installmentIndex/stripe-session', protect, authorize('customer'), createInstallmentStripeSession);
 router.post('/:id/request-return', protect, authorize('customer'), requestOrderReturn);

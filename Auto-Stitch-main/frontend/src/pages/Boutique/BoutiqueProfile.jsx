@@ -47,7 +47,7 @@ const EditorialProductCard = ({ product, toggleWishlist, isInWishlist }) => {
     <div className="editorial-product-card">
       <div className="ep-image-wrap">
         <Link to={`/products/${product._id}`}>
-          <img src={product.images[currentImageIndex] || product.images[0]} alt={product.name} className="ep-image" />
+          <img loading="lazy" decoding="async" src={product.images[currentImageIndex] || product.images[0]} alt={product.name} className="ep-image" />
         </Link>
 
         {product.images?.length > 1 && (
@@ -198,7 +198,7 @@ export default function BoutiqueProfile() {
 
       {/* Brand Catalog Footer Banner */}
       <section className="brand-catalog-footer-section">
-        <img src={brandCatalogFooter} alt="Brand Catalog" className="brand-catalog-footer-img" />
+        <img loading="lazy" decoding="async" src={brandCatalogFooter} alt="Brand Catalog" className="brand-catalog-footer-img" />
       </section>
 
       {/* Mini Floating Actions */}

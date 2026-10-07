@@ -66,9 +66,6 @@ export default function Footer() {
             <div className="footer-contact-v2">
               <p>FAST-NU, FAST Square, 9 Km from Faisalabad Motorway Interchange towards Chiniot</p>
               <p>Faisalabad, Pakistan.</p>
-              <p className="contact-detail">Call: +92 3252204959</p>
-              <p className="contact-detail">WhatsApp: +92 3252204959</p>
-              <p className="contact-detail">Email: ramisali.k786@gmail.com</p>
             </div>
           </div>
 

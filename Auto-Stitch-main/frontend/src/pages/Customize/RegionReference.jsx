@@ -21,7 +21,7 @@ function RegionCard({ region, refs, max, onAddFiles, onOpenCatalogue, onRemove }
         <div className="rr-thumbs">
           {refs.map((r) => (
             <div key={r.id} className="rr-thumb">
-              <img src={r.preview} alt={`${region.name} reference`} />
+              <img loading="lazy" decoding="async" src={r.preview} alt={`${region.name} reference`} />
               <span className="rr-thumb-source">{r.source === 'catalogue' ? 'Catalogue' : 'Gallery'}</span>
               <button
                 type="button"

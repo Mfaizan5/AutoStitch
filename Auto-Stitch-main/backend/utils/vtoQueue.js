@@ -10,11 +10,13 @@ const LocalSharpAdapter = require('../vto/LocalSharpAdapter');
 const FashnVtonAdapter = require('../vto/FashnVtonAdapter');
 const IdmVtonAdapter = require('../vto/IdmVtonAdapter');
 const ReplicateAdapter = require('../vto/ReplicateAdapter');
+const FashnVtonProvider = require('../vto/FashnVtonProvider');
 
 const localEngine = new LocalSharpAdapter();
 const fashnEngine = new FashnVtonAdapter();
 const idmEngine = new IdmVtonAdapter();
 const replicateEngine = new ReplicateAdapter();
+const fashnCloud = new FashnVtonProvider();
 
 class VtoQueueManager {
   constructor() {
@@ -112,8 +114,18 @@ class VtoQueueManager {
     try {
       let outputBuffer = null;
       let engineUsed = 'local-sharp-compositor';
+      // When a FASHN API key is set, FASHN's cloud API is the only provider:
+      // no other models and no local image-pasting fallback.
+      const fashnApiOnly = !!process.env.FASHN_API_KEY;
+      // 0. FASHN Cloud API (if FASHN_API_KEY is set)
+      if (fashnApiOnly) {
+        const fashnResult = await fashnCloud.createTryOn({ personBuffer, garmentBuffer, ...options });
+        outputBuffer = fashnResult.resultBuffer;
+        engineUsed = 'fashn-cloud-api';
+      }
+
       // 1. Primary Cloud GPU: Replicate IDM-VTON (if configured & healthy)
-      if (process.env.REPLICATE_API_TOKEN) {
+      if (!fashnApiOnly && !outputBuffer && process.env.REPLICATE_API_TOKEN) {
         try {
           outputBuffer = await replicateEngine.generate(personBuffer, garmentBuffer, options);
           engineUsed = 'replicate-idm-vton';
@@ -123,7 +135,7 @@ class VtoQueueManager {
       }
 
       // 2. Colab GPU: IDM-VTON
-      if (!outputBuffer && (process.env.VTON_SERVICE_URL || process.env.COLAB_TRYON_URL)) {
+      if (!fashnApiOnly && !outputBuffer && (process.env.VTON_SERVICE_URL || process.env.COLAB_TRYON_URL)) {
         try {
           outputBuffer = await idmEngine.generate(personBuffer, garmentBuffer, options);
           engineUsed = 'idm-vton';
@@ -133,7 +145,7 @@ class VtoQueueManager {
       }
 
       // 3. Local GPU Worker: FASHN VTON
-      if (!outputBuffer && process.env.VTO_WORKER_URL) {
+      if (!fashnApiOnly && !outputBuffer && process.env.VTO_WORKER_URL) {
         try {
           const health = await fashnEngine.healthCheck();
           if (health.ready) {
@@ -178,7 +190,9 @@ class VtoQueueManager {
     } catch (err) {
       console.error(`[❌ VTO Queue] Job ${jobId} failed:`, err.message);
 
-      if (task.retries < task.maxRetries) {
+      // FASHN rejections (bad pose, bad image, no credits) will not succeed on retry
+      const retryable = !(process.env.FASHN_API_KEY && ['PROVIDER_GENERATION_FAILED', 'PROVIDER_AUTH_ERROR'].includes(err.code));
+      if (retryable && task.retries < task.maxRetries) {
         task.retries += 1;
         console.log(`[Queue] Retrying job ${jobId} (Attempt ${task.retries}/${task.maxRetries})...`);
         this.queue.unshift(task);
@@ -188,7 +202,11 @@ class VtoQueueManager {
           {
             status: 'failed',
             failureCode: 'INFERENCE_ERROR',
-            errorDescription: 'Virtual Try-On generation could not be completed for this image. Please try another photo.',
+            errorDescription: /body pose/i.test(err.message)
+              ? 'We could not detect a full body in your photo. Please upload a clear, front-facing, full-body photo.'
+              : err.code === 'PROVIDER_AUTH_ERROR'
+                ? 'The try-on service rejected the request (check the API key or credits).'
+                : 'Virtual Try-On generation could not be completed for this image. Please try another photo.',
             deletedAt: new Date(),
           }
         );

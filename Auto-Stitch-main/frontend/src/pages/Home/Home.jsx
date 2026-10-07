@@ -231,7 +231,7 @@ export default function Home({ user }) {
                 onClick={(e) => onProtectedClick(e, '/boutiques')}
                 style={{ cursor: 'pointer' }}
               >
-                <img src={item.img} alt={item.name} />
+                <img loading="lazy" decoding="async" src={item.img} alt={item.name} />
                 <div className="eid-label-wrap">
                   <span className="eid-label-text">{item.name}</span>
                   <ArrowRight className="eid-arrow" size={18} />
@@ -275,7 +275,7 @@ export default function Home({ user }) {
                     onClick={(e) => onProtectedClick(e, '/boutiques')}
                     style={{ cursor: 'pointer' }}
                   >
-                    <img src={occ.img} alt={occ.title} className="occasion-img" />
+                    <img loading="lazy" decoding="async" src={occ.img} alt={occ.title} className="occasion-img" />
                   </div>
                 ))}
               </div>
@@ -319,7 +319,7 @@ export default function Home({ user }) {
                 onClick={(e) => onProtectedClick(e, '/boutiques')}
               >
                 <div className="trending-img-box">
-                  <img src={product.img} alt={product.title} />
+                  <img loading="lazy" decoding="async" src={product.img} alt={product.title} />
                   <div className="trending-hover-details">
                     <div className="hover-action-bar">
                       <div className="view-details-txt">View Details <ArrowRight size={16} /></div>
@@ -346,7 +346,7 @@ export default function Home({ user }) {
         onClick={(e) => onProtectedClick(e, '/boutiques')}
         style={{ cursor: 'pointer' }}
       >
-        <video className="signature-video" autoPlay muted loop playsInline>
+        <video className="signature-video" autoPlay muted loop playsInline preload="metadata">
           <source src={bannerVideo} type="video/mp4" />
         </video>
         <div className="signature-overlay">
@@ -382,7 +382,7 @@ export default function Home({ user }) {
                 <div key={idx} className="social-card">
                   <div className="social-card-header">
                     <div className="social-user-thumb">
-                      <img src={`https://picsum.photos/seed/user${idx}/50/50`} alt={item.user} />
+                      <img loading="lazy" decoding="async" src={`https://picsum.photos/seed/user${idx}/50/50`} alt={item.user} />
                     </div>
                     <div className="social-user-info">
                       <span className="social-username">{item.user}</span>
@@ -390,7 +390,7 @@ export default function Home({ user }) {
                     </div>
                   </div>
                   <div className="social-card-img" onClick={(e) => onProtectedClick(e, '/boutiques')}>
-                    <img src={item.img} alt={`Worn by ${item.user}`} />
+                    <img loading="lazy" decoding="async" src={item.img} alt={`Worn by ${item.user}`} />
                   </div>
                   <div className="social-card-footer">
                     <div className="social-icons-left">

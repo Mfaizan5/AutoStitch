@@ -96,8 +96,8 @@ export default function DesignPreview({ preview, regenLeft, onRegenerate, onSend
           </div>
         )}
 
-        {ready && view === 'design' && <img className="cp-image" src={designSrc} alt="Your customized design" />}
-        {ready && view === 'you' && tryResult && <img className="cp-image" src={tryResult} alt="Your customized design on you" />}
+        {ready && view === 'design' && <img loading="lazy" decoding="async" className="cp-image" src={designSrc} alt="Your customized design" />}
+        {ready && view === 'you' && tryResult && <img loading="lazy" decoding="async" className="cp-image" src={tryResult} alt="Your customized design on you" />}
 
         {ready && tryStatus === 'loading' && (
           <div className="cp-overlay">
@@ -202,7 +202,7 @@ export default function DesignPreview({ preview, regenLeft, onRegenerate, onSend
 
         {photo ? (
           <div className="cp-photo">
-            <img src={photo} alt="Your photo" />
+            <img loading="lazy" decoding="async" src={photo} alt="Your photo" />
             <button type="button" className="cp-link" onClick={changePhoto} disabled={tryStatus === 'loading'}>
               Choose a different photo
             </button>

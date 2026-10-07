@@ -31,9 +31,11 @@ export default function Profile({ user, onLogout, onUpdate }) {
     description: '',
     cnic: '',
     businessCertificate: '',
+    shopImage: '',
     notes: ''
   });
   const [kycLoading, setKycLoading] = useState(false);
+  const [shopImageUploading, setShopImageUploading] = useState(false);
 
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -78,10 +80,39 @@ export default function Profile({ user, onLogout, onUpdate }) {
           description: b.description || '',
           cnic: b.kyc?.cnic ? String(b.kyc.cnic).replace(/\D/g, '').slice(0, 13) : '',
           businessCertificate: b.kyc?.businessCertificate || '',
+          shopImage: b.kyc?.shopImage || '',
           notes: b.kyc?.reviewNotes || ''
         });
       }
     } catch (_) {}
+  };
+
+  const handleShopImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file (JPG, PNG or WEBP)');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be 5MB or smaller');
+      return;
+    }
+    const data = new FormData();
+    data.append('image', file);
+    setShopImageUploading(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/upload`, data, { withCredentials: true });
+      if (res.data.success) {
+        setKycForm(prev => ({ ...prev, shopImage: res.data.url }));
+        toast.success('Image attached. Submit KYC to save it.');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setShopImageUploading(false);
+    }
   };
 
   const handleCnicChange = (e) => {
@@ -395,6 +426,37 @@ export default function Profile({ user, onLogout, onUpdate }) {
                 </div>
 
                 <div className="form-group">
+                  <label className="form-label">Insert the Visiting or Shop Image</label>
+                  {kycForm.shopImage && (
+                    <div style={{ position: 'relative', width: '100%', maxWidth: '300px', marginBottom: '10px' }}>
+                      <img
+                        src={kycForm.shopImage}
+                        alt="Shop or visiting card"
+                        style={{ width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'block' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setKycForm(prev => ({ ...prev, shopImage: '' }))}
+                        style={{ position: 'absolute', top: '6px', right: '6px', background: '#000', color: '#fff', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', lineHeight: 1 }}
+                        aria-label="Remove image"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleShopImageUpload}
+                    disabled={shopImageUploading}
+                    className="profile-input"
+                  />
+                  <small style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '5px', display: 'block' }}>
+                    {shopImageUploading ? 'Uploading...' : 'Attach a photo of your shop or visiting card. JPG, PNG or WEBP, up to 5MB.'}
+                  </small>
+                </div>
+
+                <div className="form-group">
                   <label className="form-label">Brand Atelier Bio / Description</label>
                   <textarea 
                     name="description" 
@@ -615,7 +677,7 @@ export default function Profile({ user, onLogout, onUpdate }) {
             </p>
 
             <div className="qr-code-frame-2fa">
-              <img src={twoFactorSetupData.qrCodeUrl} alt="2FA QR Code" />
+              <img loading="lazy" decoding="async" src={twoFactorSetupData.qrCodeUrl} alt="2FA QR Code" />
             </div>
 
             <div className="manual-key-container-2fa">

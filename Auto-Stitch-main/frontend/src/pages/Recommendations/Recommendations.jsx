@@ -98,7 +98,7 @@ export default function Recommendations() {
 
         <div className="reco-item-img-wrap">
           <Link to={`/products/${p._id}`}>
-            <img 
+            <img loading="lazy" decoding="async" 
               src={imgSrc} 
               alt={p.name} 
               className="reco-item-img"

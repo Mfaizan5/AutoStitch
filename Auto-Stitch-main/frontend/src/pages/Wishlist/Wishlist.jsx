@@ -36,7 +36,7 @@ export default function Wishlist() {
               <div key={item._id} className="wishlist-card-premium animate-fade-in">
                 <div className="wl-img-container">
                   <Link to={`/products/${item._id}`}>
-                    <img src={item.images[0]} alt={item.name} />
+                    <img loading="lazy" decoding="async" src={item.images[0]} alt={item.name} />
                   </Link>
                   <div className="wl-overlay-actions">
                     <button className="wl-action-btn-v2" title="Remove from Curations" onClick={() => removeFromWishlist(item._id)}>

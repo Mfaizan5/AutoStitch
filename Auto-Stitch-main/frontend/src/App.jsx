@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from './config/api';
@@ -11,49 +11,49 @@ import CartDrawer from './components/CartDrawer/CartDrawer';
 
 // Pages
 import Home from './pages/Home/Home';
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import AdminLogin from './pages/Auth/AdminLogin';
-import BoutiqueLogin from './pages/Auth/BoutiqueLogin';
-import ForgotPassword from './pages/Auth/ForgotPassword';
-import ProductDetail from './pages/ProductDetail/ProductDetail';
-import CustomerDashboard from './pages/Dashboard/CustomerDashboard';
-import BoutiqueDashboard from './pages/Dashboard/BoutiqueDashboard';
-import VirtualTryOn from './pages/VirtualTryOn/VirtualTryOn';
-import BoutiqueDirectory from './pages/Boutique/BoutiqueDirectory';
-import BoutiqueProfile from './pages/Boutique/BoutiqueProfile';
-import SizeGuide from './pages/Info/SizeGuide';
-import InfoPage from './pages/Info/InfoPage';
-import Customize from './pages/Customize/Customize';
-import Bids from './pages/Bids/Bids';
-import Chat from './pages/Chat/Chat';
-import BoutiqueBids from './pages/Boutique/BoutiqueBids';
-import Cart from './pages/Cart/Cart';
+const Login = lazy(() => import('./pages/Auth/Login'));
+const Register = lazy(() => import('./pages/Auth/Register'));
+const AdminLogin = lazy(() => import('./pages/Auth/AdminLogin'));
+const BoutiqueLogin = lazy(() => import('./pages/Auth/BoutiqueLogin'));
+const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail/ProductDetail'));
+const CustomerDashboard = lazy(() => import('./pages/Dashboard/CustomerDashboard'));
+const BoutiqueDashboard = lazy(() => import('./pages/Dashboard/BoutiqueDashboard'));
+const VirtualTryOn = lazy(() => import('./pages/VirtualTryOn/VirtualTryOn'));
+const BoutiqueDirectory = lazy(() => import('./pages/Boutique/BoutiqueDirectory'));
+const BoutiqueProfile = lazy(() => import('./pages/Boutique/BoutiqueProfile'));
+const SizeGuide = lazy(() => import('./pages/Info/SizeGuide'));
+const InfoPage = lazy(() => import('./pages/Info/InfoPage'));
+const Customize = lazy(() => import('./pages/Customize/Customize'));
+const Bids = lazy(() => import('./pages/Bids/Bids'));
+const Chat = lazy(() => import('./pages/Chat/Chat'));
+const BoutiqueBids = lazy(() => import('./pages/Boutique/BoutiqueBids'));
+const Cart = lazy(() => import('./pages/Cart/Cart'));
 
 // New fully-built pages
-import Orders from './pages/Orders/Orders';
-import OrderDetail from './pages/Orders/OrderDetail';
-import Wishlist from './pages/Wishlist/Wishlist';
-import Checkout from './pages/Checkout/Checkout';
-import Profile from './pages/Profile/Profile';
-import Recommendations from './pages/Recommendations/Recommendations';
-import About from './pages/About/About';
-import Careers from './pages/Careers/Careers';
-import Contact from './pages/Contact/Contact';
-import Terms from './pages/Info/Terms';
-import Returns from './pages/Info/Returns';
-import Privacy from './pages/Info/Privacy';
-import FAQ from './pages/Info/FAQ';
-import TrackOrder from './pages/Info/TrackOrder';
-import StoreLocator from './pages/Info/StoreLocator';
-import NotFound from './pages/NotFound/NotFound';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import UserManagement from './pages/Admin/UserManagement';
-import ListingModeration from './pages/Admin/ListingModeration';
-import ManageProducts from './pages/BoutiqueManage/ManageProducts';
-import BoutiqueOrders from './pages/BoutiqueManage/BoutiqueOrders';
-import Analytics from './pages/BoutiqueManage/Analytics';
-import Catalogue from './pages/Catalogue/Catalogue';
+const Orders = lazy(() => import('./pages/Orders/Orders'));
+const OrderDetail = lazy(() => import('./pages/Orders/OrderDetail'));
+const Wishlist = lazy(() => import('./pages/Wishlist/Wishlist'));
+const Checkout = lazy(() => import('./pages/Checkout/Checkout'));
+const Profile = lazy(() => import('./pages/Profile/Profile'));
+const Recommendations = lazy(() => import('./pages/Recommendations/Recommendations'));
+const About = lazy(() => import('./pages/About/About'));
+const Careers = lazy(() => import('./pages/Careers/Careers'));
+const Contact = lazy(() => import('./pages/Contact/Contact'));
+const Terms = lazy(() => import('./pages/Info/Terms'));
+const Returns = lazy(() => import('./pages/Info/Returns'));
+const Privacy = lazy(() => import('./pages/Info/Privacy'));
+const FAQ = lazy(() => import('./pages/Info/FAQ'));
+const TrackOrder = lazy(() => import('./pages/Info/TrackOrder'));
+const StoreLocator = lazy(() => import('./pages/Info/StoreLocator'));
+const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
+const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
+const UserManagement = lazy(() => import('./pages/Admin/UserManagement'));
+const ListingModeration = lazy(() => import('./pages/Admin/ListingModeration'));
+const ManageProducts = lazy(() => import('./pages/BoutiqueManage/ManageProducts'));
+const BoutiqueOrders = lazy(() => import('./pages/BoutiqueManage/BoutiqueOrders'));
+const Analytics = lazy(() => import('./pages/BoutiqueManage/Analytics'));
+const Catalogue = lazy(() => import('./pages/Catalogue/Catalogue'));
 
 function ProtectedRoute({ user, allowedRoles, children }) {
   if (!user) return <Navigate to="/login" replace />;
@@ -134,6 +134,7 @@ export default function App() {
             <Navbar user={user} onLogout={handleLogout} />
             <CartDrawer />
 
+            <Suspense fallback={<div style={{ minHeight: '60vh' }} />}>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home user={user} />} />
@@ -202,6 +203,7 @@ export default function App() {
               {/* 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
 
             <Chatbot />
             <Footer />

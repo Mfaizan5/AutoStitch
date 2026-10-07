@@ -11,7 +11,7 @@ export default function About() {
     <div className="about-page page-enter">
       {/* 1. Hero Image Section */}
       <section className="about-hero-v2">
-        <img src="/about/about.jpg" alt="About Auto Stitch" className="about-hero-img" />
+        <img loading="lazy" decoding="async" src="/about/about.jpg" alt="About Auto Stitch" className="about-hero-img" />
       </section>
 
       {/* 2. Content Section */}

@@ -161,7 +161,7 @@ export default function BoutiqueOrders() {
               return (
                 <div key={o._id} className="product-card-premium" style={{ borderLeft: isAlterationRequested ? '4px solid #d97706' : '1px solid #f0f0f0' }}>
                   <div className="pc-image-wrap">
-                    <img 
+                    <img loading="lazy" decoding="async" 
                       src={o.items?.[0]?.image || o.items?.[0]?.product?.images?.[0] || getFallbackImage(o.customizationRequest || o._id)} 
                       alt="" 
                       className="pc-image" 

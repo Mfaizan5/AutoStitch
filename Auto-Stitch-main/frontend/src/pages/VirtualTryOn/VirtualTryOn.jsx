@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import toast from 'react-hot-toast';
+import { downloadImage } from '../../utils/downloadImage';
 import '../Dashboard/Dashboard.css';
 import './VirtualTryOn.css';
 
@@ -189,14 +190,15 @@ export default function VirtualTryOn() {
     }
   };
 
-  const handleSave = () => {
-    const link = document.createElement('a');
-    link.href = generatedTryOnImage || selectedGarment?.image || '';
-    link.download = `auto-stitch-tryon-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Try-on render saved successfully!');
+  const handleSave = async () => {
+    const url = generatedTryOnImage || selectedGarment?.image || '';
+    if (!url) return;
+    try {
+      await downloadImage(url, `auto-stitch-tryon-${Date.now()}`);
+      toast.success('Try-on render saved to your device!');
+    } catch {
+      toast.error('Could not save the image. Please try again.');
+    }
   };
 
   const handleShare = () => {
@@ -244,6 +246,18 @@ export default function VirtualTryOn() {
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
+  };
+
+  // Studio models are bundled in /public/model_images; load them like an uploaded photo
+  const pickStudioModel = async (path) => {
+    try {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error('not found');
+      const blob = await res.blob();
+      processClientImage(new File([blob], path.split('/').pop(), { type: blob.type }));
+    } catch {
+      toast.error('Could not load the studio model. Please upload your own photo.');
+    }
   };
 
   const handleFileChange = (e) => {
@@ -340,7 +354,7 @@ export default function VirtualTryOn() {
                   >
                     {userPhoto ? (
                       <>
-                        <img src={userPhoto} alt="Your photo" className="upload-preview" />
+                        <img loading="lazy" decoding="async" src={userPhoto} alt="Your photo" className="upload-preview" />
                         <button className="upload-remove" onClick={(e) => { e.stopPropagation(); setUserPhoto(null); }}>
                           <X size={16} />
                         </button>
@@ -371,7 +385,7 @@ export default function VirtualTryOn() {
                               style={{ fontSize: '0.72rem', padding: '4px 8px', border: '1px solid #e5e5e5' }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setUserPhoto('https://images.pexels.com/photos/157675/fashion-men-s-individuality-black-and-white-157675.jpeg?auto=compress&cs=tinysrgb&w=600');
+                                pickStudioModel('/model_images/model1.jpg');
                               }}
                             >
                               Model 1
@@ -382,7 +396,7 @@ export default function VirtualTryOn() {
                               style={{ fontSize: '0.72rem', padding: '4px 8px', border: '1px solid #e5e5e5' }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setUserPhoto('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80');
+                                pickStudioModel('/model_images/model2.webp');
                               }}
                             >
                               Model 2
@@ -393,7 +407,7 @@ export default function VirtualTryOn() {
                               style={{ fontSize: '0.72rem', padding: '4px 8px', border: '1px solid #e5e5e5' }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setUserPhoto('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80');
+                                pickStudioModel('/model_images/model3.webp');
                               }}
                             >
                               Model 3
@@ -443,7 +457,7 @@ export default function VirtualTryOn() {
                   }}>
                     {selectedGarment ? (
                       <>
-                        <img 
+                        <img loading="lazy" decoding="async" 
                           src={selectedGarment.image || selectedGarment.images?.[0]} 
                           alt={selectedGarment.name} 
                           className="upload-preview" 
@@ -526,7 +540,7 @@ export default function VirtualTryOn() {
                             transition: 'all 0.2s ease', position: 'relative'
                           }}
                         >
-                          <img 
+                          <img loading="lazy" decoding="async" 
                             src={g.images?.[0]} 
                             alt={g.name} 
                             style={{ width: '100%', height: '140px', objectFit: 'cover' }} 

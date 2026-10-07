@@ -82,17 +82,15 @@ class FashnVtonProvider extends VirtualTryOnProvider {
     if (this.apiKey) {
       console.log(`[FashnVtonProvider] Submitting to Fashn Cloud API (category: ${fashnCategory}, mode: ${this.mode})...`);
 
+      // FASHN API format: { model_name, inputs: {...} }
       const payload = {
-        model_image: humanBase64,
-        garment_image: garmentBase64,
-        category: fashnCategory,
-        mode: this.mode,
-        nsfw_filter: true,
-        cover_feet: false,
-        adjust_hands: true, // Preserves hands/arms naturally in front of garment
-        restore_background: true, // Keeps original customer background intact
-        restore_clothes: false, // Ensures previous clothing is cleanly replaced
-        long_top: fashnCategory === 'tops' && (garmentName.toLowerCase().includes('kurta') || garmentName.toLowerCase().includes('tunic')),
+        model_name: process.env.FASHN_MODEL || 'tryon-v1.6',
+        inputs: {
+          model_image: humanBase64,
+          garment_image: garmentBase64,
+          category: fashnCategory,
+          mode: this.mode,
+        },
       };
 
       const res = await fetch(`${this.apiUrl}/run`, {
@@ -211,7 +209,7 @@ class FashnVtonProvider extends VirtualTryOnProvider {
       }
 
       if (data.status === 'failed') {
-        const err = new Error(`FASHN Try-On prediction failed: ${data.error || 'Unknown AI error'}`);
+        const err = new Error(`FASHN Try-On prediction failed: ${typeof data.error === 'string' ? data.error : JSON.stringify(data.error || 'Unknown AI error')}`);
         err.code = 'PROVIDER_GENERATION_FAILED';
         throw err;
       }

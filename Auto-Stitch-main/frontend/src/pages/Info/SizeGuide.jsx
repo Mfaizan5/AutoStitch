@@ -22,7 +22,7 @@ export default function SizeGuide() {
       {/* Editorial Banner - Linked to Boutiques */}
       <Link to="/boutiques" className="size-banner-link">
         <div className="size-banner-container">
-          <img src={sizeBanner} alt="Size Guide Banner" className="size-banner-img" />
+          <img loading="lazy" decoding="async" src={sizeBanner} alt="Size Guide Banner" className="size-banner-img" />
         </div>
       </Link>
 

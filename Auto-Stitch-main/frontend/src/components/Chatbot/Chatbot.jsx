@@ -14,6 +14,12 @@ export default function Chatbot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Keep the cursor in the input when the window opens and after each reply
+  useEffect(() => {
+    if (isOpen && !isMinimized && !isLoading) inputRef.current?.focus();
+  }, [isOpen, isMinimized, isLoading]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -107,6 +113,7 @@ export default function Chatbot() {
 
           <form className="chatbot-input" onSubmit={handleSend}>
             <input
+              ref={inputRef}
               type="text"
               placeholder="Ask me anything..."
               value={input}

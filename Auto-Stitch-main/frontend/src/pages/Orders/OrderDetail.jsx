@@ -10,6 +10,7 @@ import API_URL from '../../config/api';
 import './Orders.css';
 import { EDITORIAL_PRODUCTS } from '../../data/mockData';
 import toast from 'react-hot-toast';
+import MockCardModal from '../../components/MockCardModal/MockCardModal';
 
 const getFallbackImage = (id) => {
   if (!id) return '';
@@ -36,6 +37,7 @@ export default function OrderDetail() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [payingInstallment, setPayingInstallment] = useState(null);
+  const [mockInstallment, setMockInstallment] = useState(null); // installment index awaiting a simulated card payment
   
   // Return Form
   const [returnReason, setReturnReason] = useState('Fit Alteration Required');
@@ -79,6 +81,13 @@ export default function OrderDetail() {
     }
   };
 
+  const completeMockInstallment = async () => {
+    await axios.post(`${API_URL}/api/orders/${id}/mock-pay`, { installmentIndex: mockInstallment }, { withCredentials: true });
+    toast.success(`Installment #${mockInstallment + 1} paid!`);
+    setMockInstallment(null);
+    fetchOrder();
+  };
+
   const handlePayInstallment = async (index) => {
     setPayingInstallment(index);
     try {
@@ -87,7 +96,9 @@ export default function OrderDetail() {
         {},
         { withCredentials: true }
       );
-      if (data.url) {
+      if (data.mockPaymentRequired) {
+        setMockInstallment(index);
+      } else if (data.url) {
         window.location.href = data.url;
       } else {
         toast.error('Could not initialize payment session.');
@@ -166,6 +177,14 @@ export default function OrderDetail() {
 
   return (
     <div className="order-detail-page page-enter">
+      {mockInstallment !== null && order?.installmentPlan?.installments?.[mockInstallment] && (
+        <MockCardModal
+          title={`Pay Installment #${mockInstallment + 1}`}
+          amount={order.installmentPlan.installments[mockInstallment].amount}
+          onClose={() => setMockInstallment(null)}
+          onPaid={completeMockInstallment}
+        />
+      )}
       <div className="tryon-content-v2">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
           <Link 
@@ -263,7 +282,7 @@ export default function OrderDetail() {
               <div className="od-items-editorial">
                 {order.items.map((item, i) => (
                   <div key={i} className="od-item-v3" style={{ display: 'flex', gap: '20px', paddingBottom: '1.5rem', marginBottom: '1.5rem', borderBottom: '1px solid #f0f0f0' }}>
-                    <img 
+                    <img loading="lazy" decoding="async" 
                       src={item.image || item.product?.images?.[0] || getFallbackImage(order.customizationRequest || order._id)} 
                       alt={item.name} 
                       style={{ width: '80px', height: '105px', objectFit: 'cover', borderRadius: '2px' }}
@@ -379,7 +398,7 @@ export default function OrderDetail() {
                       ).map((imgUrl, imgIdx) => (
                         <div key={imgIdx} style={{ position: 'relative', border: '1px solid #e5e5e5', borderRadius: '4px', overflow: 'hidden', background: '#fafafa' }}>
                           <a href={imgUrl} target="_blank" rel="noreferrer" title="Click to view full high-res photo">
-                            <img 
+                            <img loading="lazy" decoding="async" 
                               src={imgUrl} 
                               alt={`Reference Design #${imgIdx + 1}`} 
                               style={{ width: '140px', height: '180px', objectFit: 'cover', display: 'block', cursor: 'zoom-in' }} 

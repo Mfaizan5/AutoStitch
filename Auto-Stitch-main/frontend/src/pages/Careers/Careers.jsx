@@ -149,7 +149,7 @@ export default function Careers() {
 
       {/* 3. Full-Width Image Section */}
       <section className="careers-image-section">
-        <img src="/about/about.jpg" alt="Careers at Auto Stitch" className="careers-full-img" />
+        <img loading="lazy" decoding="async" src="/about/about.jpg" alt="Careers at Auto Stitch" className="careers-full-img" />
       </section>
 
       {/* Application Modal */}

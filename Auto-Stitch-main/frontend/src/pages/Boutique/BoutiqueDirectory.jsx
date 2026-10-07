@@ -58,7 +58,7 @@ export default function BoutiqueDirectory() {
       {/* Editorial Hero Banner */}
       <section className="directory-hero-v2">
         <div className="hero-banner-v2">
-          <img src={BoutiqueHero} alt="Boutique Collections" className="hero-img-v2" />
+          <img loading="lazy" decoding="async" src={BoutiqueHero} alt="Boutique Collections" className="hero-img-v2" />
           <div className="hero-overlay-v2"></div>
         </div>
       </section>
@@ -131,7 +131,7 @@ export default function BoutiqueDirectory() {
             return (
               <Link to={`/boutiques/${targetId}`} key={idx} className="editorial-card">
                 <div className="editorial-card-img-wrap">
-                  <img src={item.img} alt={item.name} className="editorial-img" />
+                  <img loading="lazy" decoding="async" src={item.img} alt={item.name} className="editorial-img" />
                 </div>
                 <div className="editorial-card-info">
                   <p className="editorial-brand">{item.brand}</p>
@@ -147,7 +147,7 @@ export default function BoutiqueDirectory() {
 
       {/* Full Width Footer Banner Section */}
       <div className="directory-footer-banner full-bleed">
-        <img src={FooterBanner} alt="Studio Peek and Slay" className="footer-banner-img" />
+        <img loading="lazy" decoding="async" src={FooterBanner} alt="Studio Peek and Slay" className="footer-banner-img" />
       </div>
 
       {/* Full Width Best Sellers Section */}
@@ -157,7 +157,7 @@ export default function BoutiqueDirectory() {
           <p className="best-sellers-subtitle">Our most-loved pieces, curated for your wardrobe.</p>
         </div>
         <div className="best-sellers-banner-wrap">
-          <img src={BestSellerBanner} alt="Best Sellers Curated" className="best-sellers-img" />
+          <img loading="lazy" decoding="async" src={BestSellerBanner} alt="Best Sellers Curated" className="best-sellers-img" />
         </div>
       </div>
     </div>

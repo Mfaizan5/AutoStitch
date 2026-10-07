@@ -18,11 +18,13 @@ const {
   purgeJobAssets,
 } = require('../utils/s3Service');
 const LocalSharpAdapter = require('../vto/LocalSharpAdapter');
+const FashnVtonProvider = require('../vto/FashnVtonProvider');
 const FashnVtonAdapter = require('../vto/FashnVtonAdapter');
 const IdmVtonAdapter = require('../vto/IdmVtonAdapter');
 const ReplicateAdapter = require('../vto/ReplicateAdapter');
 
 const localEngine = new LocalSharpAdapter();
+const fashnCloud = new FashnVtonProvider();
 const fashnEngine = new FashnVtonAdapter();
 const idmEngine = new IdmVtonAdapter();
 const replicateEngine = new ReplicateAdapter();
@@ -317,8 +319,21 @@ const processTryOn = async (req, res) => {
     const tempJobId = `sync_${Date.now()}`;
     let resultBuffer = null;
 
+    // FASHN API only: when its key is set, no other models and no local fallback
+    const fashnApiOnly = !!process.env.FASHN_API_KEY;
+    if (fashnApiOnly) {
+      const fashnResult = await fashnCloud.createTryOn({
+        personBuffer: sanitizedPerson.buffer,
+        garmentBuffer,
+        category: category || 'dresses',
+        garmentName,
+        fitStyle,
+      });
+      resultBuffer = fashnResult.resultBuffer;
+    }
+
     // 1. Try Replicate Cloud GPU (IDM-VTON) if configured
-    if (process.env.REPLICATE_API_TOKEN) {
+    if (!fashnApiOnly && process.env.REPLICATE_API_TOKEN) {
       try {
         resultBuffer = await replicateEngine.generate(sanitizedPerson.buffer, garmentBuffer, {
           category: category || 'dresses',
@@ -331,7 +346,7 @@ const processTryOn = async (req, res) => {
     }
 
     // 2. Try Colab GPU (IDM-VTON) if configured
-    if (!resultBuffer && (process.env.VTON_SERVICE_URL || process.env.COLAB_TRYON_URL)) {
+    if (!fashnApiOnly && !resultBuffer && (process.env.VTON_SERVICE_URL || process.env.COLAB_TRYON_URL)) {
       try {
         resultBuffer = await idmEngine.generate(sanitizedPerson.buffer, garmentBuffer, {
           category: category || 'dresses',
@@ -344,7 +359,7 @@ const processTryOn = async (req, res) => {
     }
 
     // 3. Fallback to Local Neural Compositor
-    if (!resultBuffer) {
+    if (!fashnApiOnly && !resultBuffer) {
       resultBuffer = await localEngine.generate(sanitizedPerson.buffer, garmentBuffer, {
         category: category || 'dresses',
         garmentName,

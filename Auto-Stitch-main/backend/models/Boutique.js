@@ -24,6 +24,7 @@ const boutiqueSchema = new mongoose.Schema(
       status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
       cnic: { type: String },
       businessCertificate: { type: String },
+      shopImage: { type: String },
       submittedAt: { type: Date },
       reviewedAt: { type: Date },
       reviewNotes: { type: String },

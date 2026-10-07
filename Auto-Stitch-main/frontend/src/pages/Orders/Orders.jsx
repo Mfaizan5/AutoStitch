@@ -132,7 +132,7 @@ export default function Orders() {
                   <div className="order-items-editorial">
                     {order.items.map((item, idx) => (
                       <div key={idx} className="order-item-v2">
-                        <img 
+                        <img loading="lazy" decoding="async" 
                           src={item.image || item.product?.images?.[0] || getFallbackImage(order.customizationRequest || order._id)} 
                           alt={item.name} 
                           className="order-item-img-v2" 

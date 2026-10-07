@@ -169,7 +169,7 @@ export default function Bids() {
                       onClick={() => handleSelectRequest(req)}
                     >
                       <div className="reg-img-wrap">
-                        <img 
+                        <img loading="lazy" decoding="async" 
                           src={req.product?.images?.[0] || req.referenceImages?.[0] || getFallbackImage(req._id)} 
                           alt="" 
                           onError={(e) => { e.target.src = getFallbackImage(req._id); }}
@@ -196,7 +196,7 @@ export default function Bids() {
                   <div className="workspace-hero-premium glass-card">
                     <div className="hero-product-display">
                       <div className="hero-img-container">
-                        <img 
+                        <img loading="lazy" decoding="async" 
                           src={selectedRequest.product?.images?.[0] || selectedRequest.referenceImages?.[0] || getFallbackImage(selectedRequest._id)} 
                           alt="" 
                           onError={(e) => { e.target.src = getFallbackImage(selectedRequest._id); }}

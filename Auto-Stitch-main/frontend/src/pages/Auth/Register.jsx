@@ -277,7 +277,17 @@ export default function Register({ onLogin }) {
           <div className="auth-separator-v2">Or</div>
 
           <div className="social-login-group-v2">
-            <button type="button" className="social-btn-v2" onClick={() => loginWithGoogle()}>
+            <button
+              type="button"
+              className="social-btn-v2"
+              onClick={() => {
+                if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+                  setError('Google sign-up is not configured yet. Please register with your email and password.');
+                  return;
+                }
+                loginWithGoogle();
+              }}
+            >
               <FaGoogle />
               <span>Sign up with Google</span>
             </button>

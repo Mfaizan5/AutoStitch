@@ -173,12 +173,17 @@
   font-weight: 400;
   margin-bottom: 0.4rem;
   letter-spacing: -0.01em;
+  color: #ffffff;
 }
 
 .track-hero-sub {
   font-size: 0.85rem;
-  color: #a3a3a3;
+  color: #ffffff;
   line-height: 1.5;
+}
+
+.track-hero-sub strong {
+  color: #ffffff;
 }
 
 .courier-badge {
@@ -192,7 +197,7 @@
   display: block;
   font-size: 0.65rem;
   letter-spacing: 0.15em;
-  color: #888;
+  color: #ffffff;
 }
 
 .courier-badge strong {

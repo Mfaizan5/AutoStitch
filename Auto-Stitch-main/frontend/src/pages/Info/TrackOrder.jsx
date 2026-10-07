@@ -190,7 +190,7 @@ export default function TrackOrder() {
                 <div className="track-items-list">
                   {order.items?.map((item, idx) => (
                     <div key={idx} className="track-item-row">
-                      <img 
+                      <img loading="lazy" decoding="async" 
                         src={item.image || item.product?.images?.[0] || 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=150'} 
                         alt={item.name} 
                         className="track-item-thumb" 

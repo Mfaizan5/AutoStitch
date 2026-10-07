@@ -4,6 +4,7 @@ import { ArrowLeft, CreditCard, Truck, ShieldCheck, Lock, ArrowRight, CheckCircl
 import { useCart } from '../../context/CartContext';
 import API_URL from '../../config/api';
 import axios from 'axios';
+import MockCardModal from '../../components/MockCardModal/MockCardModal';
 import './Checkout.css';
 
 export default function Checkout() {
@@ -13,6 +14,7 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', street: '', city: '', province: '', postalCode: '', paymentMethod: 'cod', notes: '' });
   const [placedOrderId, setPlacedOrderId] = useState(null);
+  const [mockOrder, setMockOrder] = useState(null); // order waiting for a simulated card payment
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
   const [searchParams] = useSearchParams();
@@ -165,6 +167,8 @@ export default function Checkout() {
 
       if (data.stripeSessionUrl) {
         window.location.href = data.stripeSessionUrl;
+      } else if (data.mockPaymentRequired) {
+        setMockOrder(data.order);
       } else {
         setPlacedOrderId(data.order._id);
         setStep(3);
@@ -172,10 +176,36 @@ export default function Checkout() {
       }
     } catch (err) {
       console.error('Checkout error:', err);
-      alert(err.response?.data?.message || 'A network error occurred. Please try again.');
+      const msg = err.response?.data?.message || 'A network error occurred. Please try again.';
+      if (/stripe.*not configured/i.test(msg)) {
+        // Card/installments are unavailable on this server, so fall back to COD for the next attempt
+        setForm(f => ({ ...f, paymentMethod: 'cod' }));
+        alert('Card and installment payments are not available right now. Your payment method has been switched to Cash on Delivery. Please confirm your order again.');
+      } else {
+        alert(msg);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const completeMockPayment = async () => {
+    await axios.post(`${API_URL}/api/orders/${mockOrder._id}/mock-pay`, {}, { withCredentials: true });
+    setPlacedOrderId(mockOrder._id);
+    setMockOrder(null);
+    setStep(3);
+    clearCart();
+  };
+
+  const cancelMockPayment = async () => {
+    const orderId = mockOrder?._id;
+    setMockOrder(null);
+    try {
+      await axios.patch(`${API_URL}/api/orders/${orderId}/cancel`, {}, { withCredentials: true });
+    } catch (err) {
+      console.error('Could not cancel unpaid order:', err);
+    }
+    alert('Payment cancelled, so the order was not placed.');
   };
 
   if (cartItems.length === 0 && step !== 3) {
@@ -196,6 +226,14 @@ export default function Checkout() {
 
   return (
     <div className="checkout-page page-enter">
+      {mockOrder && (
+        <MockCardModal
+          title={mockOrder.installmentPlan?.enabled ? 'Pay First Installment' : 'Card Payment'}
+          amount={mockOrder.installmentPlan?.enabled ? mockOrder.installmentPlan.installments?.[0]?.amount : mockOrder.total}
+          onClose={cancelMockPayment}
+          onPaid={completeMockPayment}
+        />
+      )}
       <div className="checkout-container">
         <div className="checkout-header">
           <h1 className="checkout-title-serif">Payment & <span className="text-gradient">Logistics</span></h1>
@@ -287,7 +325,7 @@ export default function Checkout() {
               <div className="summary-items-list">
                 {cartItems.map(item => (
                   <div key={`${item._id}-${item.size}`} className="summary-item-v2">
-                    <img src={item.images?.[0]} alt={item.name} />
+                    <img loading="lazy" decoding="async" src={item.images?.[0]} alt={item.name} />
                     <div className="summary-item-info">
                       <p className="summary-item-name">{item.name}</p>
                       <p className="summary-item-meta">Size: {item.size || 'STD'} · Qty: {item.quantity}</p>

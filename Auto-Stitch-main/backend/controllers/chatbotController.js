@@ -1,6 +1,7 @@
 const OpenAI = require('openai');
 const Product = require('../models/Product');
 const Boutique = require('../models/Boutique');
+const { buildOfflineReply } = require('../utils/chatbotFallback');
 
 const getConversationHistory = (history) => {
   if (!Array.isArray(history)) {
@@ -29,19 +30,12 @@ const getChatbotResponse = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Message is required' });
     }
 
-    if (!process.env.GROQ_API_KEY) {
-      return res.status(503).json({ success: false, message: 'Chatbot is temporarily unavailable.' });
-    }
-
-    const groq = new OpenAI({
-      apiKey: process.env.GROQ_API_KEY,
-      baseURL: 'https://api.groq.com/openai/v1',
-    });
-
     // 1. Search DB for relevant context
     const keywords = message.trim().split(/\s+/).filter(word => word.length > 3);
 
     let context = '';
+    let products = [];
+    let boutiques = [];
 
     if (keywords.length > 0) {
       const keywordPattern = keywords
@@ -62,7 +56,7 @@ const getChatbotResponse = async (req, res) => {
         ]
       };
 
-      const [products, boutiques] = await Promise.all([
+      [products, boutiques] = await Promise.all([
         Product.find(productQuery).limit(5).select('name description price category').lean(),
         Boutique.find(boutiqueQuery).limit(3).select('name description').lean()
       ]);
@@ -82,6 +76,16 @@ const getChatbotResponse = async (req, res) => {
       }
     }
 
+    // No AI key configured: answer from the built-in FAQ rules and the catalogue
+    if (!process.env.GROQ_API_KEY) {
+      return res.json({ success: true, reply: buildOfflineReply(message, products, boutiques), offline: true });
+    }
+
+    const groq = new OpenAI({
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: 'https://api.groq.com/openai/v1',
+    });
+
     // 2. Construct Prompt for Groq (Llama 3)
     const systemPrompt = `You are "Stitchie", the AI assistant for Auto Stitch, a premium fashion platform in Pakistan. 
 Your goal is to help users find products, boutiques, and understand our features like Virtual Try-On and Customization.
@@ -95,6 +99,8 @@ Instructions:
 - If a user asks about "Virtual Try-On", tell them it's a feature where they can upload their photo to see how clothes look on them.
 - If they ask about "Customization", explain they can request modifications and boutiques will bid on their requests.
 - Keep answers concise (max 3-4 sentences).
+- Only mention products, boutiques, prices, collections or site filters that appear in the context above. Never invent them. If nothing matches, say you couldn't find it and suggest browsing the Catalogue page.
+- The user may make spelling mistakes; interpret their intent.
 - If you don't know something, suggest they contact our support or visit the Contact page.`;
 
     const candidateModels = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b'];

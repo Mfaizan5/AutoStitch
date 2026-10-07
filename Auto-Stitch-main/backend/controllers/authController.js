@@ -124,15 +124,12 @@ const register = async (req, res) => {
       });
     }
 
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Welcome to Auto Stitch',
-        html: getWelcomeTemplate(user.name, user.role),
-      });
-    } catch (emailErr) {
-      console.error('Welcome email failed to send:', emailErr);
-    }
+    // Send the welcome email in the background so registration responds immediately
+    sendEmail({
+      email: user.email,
+      subject: 'Welcome to Auto Stitch',
+      html: getWelcomeTemplate(user.name, user.role),
+    }).catch((emailErr) => console.error('Welcome email failed to send:', emailErr));
 
     sendTokenResponse(user, 201, res);
   } catch (error) {

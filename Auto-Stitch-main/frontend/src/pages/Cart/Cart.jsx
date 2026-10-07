@@ -124,7 +124,7 @@ export default function Cart() {
               {cartItems.map((item) => (
                 <div key={`${item._id}-${item.size}-${item.color}`} className="cart-item">
                   <div className="cart-item-img">
-                    <img src={item.images?.[0] || `https://picsum.photos/seed/${item._id}/120/155`} alt={item.name} />
+                    <img loading="lazy" decoding="async" src={item.images?.[0] || `https://picsum.photos/seed/${item._id}/120/155`} alt={item.name} />
                   </div>
                   
                   <div className="cart-item-details">

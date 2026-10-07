@@ -60,7 +60,7 @@ export default function CartDrawer() {
             cartItems.map((item) => (
               <div key={`${item._id}-${item.size}-${item.color}`} className="drawer-item">
                 <div className="drawer-item-img">
-                  <img src={item.images?.[0] || `https://picsum.photos/seed/${item._id}/80/100`} alt={item.name} />
+                  <img loading="lazy" decoding="async" src={item.images?.[0] || `https://picsum.photos/seed/${item._id}/80/100`} alt={item.name} />
                 </div>
                 <div className="drawer-item-details">
                   <div className="drawer-item-main">

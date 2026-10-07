@@ -149,7 +149,7 @@ export default function Catalogue() {
             {products.map((product) => (
               <Link to={`/products/${product._id}`} key={product._id} className="editorial-item">
                 <div className="item-image-wrap">
-                  <img 
+                  <img loading="lazy" decoding="async" 
                     src={product.images?.[0] || `https://picsum.photos/seed/${product._id}/600/800`} 
                     alt={product.name} 
                     loading="lazy"

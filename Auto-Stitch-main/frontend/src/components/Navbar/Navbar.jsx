@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, ShoppingBag, Heart, User, X, Bell, Info, CheckCircle } from 'lucide-react';
 import axios from 'axios';
@@ -99,6 +99,47 @@ export default function Navbar({ user, wishlistCount = 0, onLogout }) {
   const [notifs, setNotifs] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Close the notification list when the user clicks or presses Escape outside it
+  const notifAreaRef = useRef(null);
+  useEffect(() => {
+    if (!notifOpen) return;
+    const closeNotifs = () => {
+      setNotifOpen(false);
+      setNotifs(prev => prev.map(n => ({ ...n, isRead: true })));
+    };
+    const onPointerDown = (e) => {
+      if (notifAreaRef.current && !notifAreaRef.current.contains(e.target)) closeNotifs();
+    };
+    const onKeyDown = (e) => { if (e.key === 'Escape') closeNotifs(); };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('touchstart', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('touchstart', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [notifOpen]);
+
+  // Opening the bell clears the badge and marks everything as read.
+  // The list keeps its unread highlights until it is closed.
+  const toggleNotifs = async () => {
+    if (notifOpen) {
+      setNotifOpen(false);
+      setNotifs(prev => prev.map(n => ({ ...n, isRead: true })));
+      return;
+    }
+    setNotifOpen(true);
+    if (unreadCount > 0) {
+      setUnreadCount(0);
+      try {
+        await axios.patch(`${API_URL}/api/notifications/read-all`, {}, { withCredentials: true });
+      } catch (_) {
+        fetchNotifs();
+      }
+    }
+  };
+
   const fetchNotifs = async () => {
     if (!user) return;
     try {
@@ -176,15 +217,15 @@ export default function Navbar({ user, wishlistCount = 0, onLogout }) {
           {/* Center: Logo */}
           <div className="nav-group-center-v2">
             <Link to="/" className="navbar-logo-v2" aria-label="Auto Stitch Home">
-              <img src={logoMain} alt="Auto Stitch" className="navbar-logo-img" />
+              <img loading="lazy" decoding="async" src={logoMain} alt="Auto Stitch" className="navbar-logo-img" />
             </Link>
           </div>
 
           {/* Right: Actions */}
           <div className="nav-group-right-v2">
             {user && (
-              <div className="nav-notif-area">
-                <button className="nav-icon-btn-v2" onClick={() => setNotifOpen(!notifOpen)}>
+              <div className="nav-notif-area" ref={notifAreaRef}>
+                <button className="nav-icon-btn-v2" onClick={toggleNotifs}>
                   <Bell size={22} strokeWidth={1.5} />
                   {unreadCount > 0 && <span className="nav-badge-v2">{unreadCount}</span>}
                 </button>

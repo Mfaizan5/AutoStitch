@@ -308,7 +308,7 @@ export default function Customize() {
                     </h3>
                     <div className="upload-dropzone filled">
                       {productImage ? (
-                        <img src={productImage} alt={productName} className="upload-preview" />
+                        <img loading="lazy" decoding="async" src={productImage} alt={productName} className="upload-preview" />
                       ) : (
                         <div className="upload-placeholder">
                           <p className="upload-hint">No image available</p>
@@ -443,7 +443,7 @@ export default function Customize() {
                               {list.length > 0 ? (
                                 <div className="review-refs">
                                   {list.map((ref) => (
-                                    <img key={ref.id} src={ref.preview} alt={`${r.name} reference`} className="review-img" />
+                                    <img loading="lazy" decoding="async" key={ref.id} src={ref.preview} alt={`${r.name} reference`} className="review-img" />
                                   ))}
                                 </div>
                               ) : (

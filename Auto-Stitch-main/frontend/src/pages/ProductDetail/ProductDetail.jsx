@@ -14,6 +14,7 @@ import { useWishlist } from '../../context/WishlistContext';
 import { ProductDetailSkeleton } from '../../components/SkeletonLoader/SkeletonLoader';
 import API_URL from '../../config/api';
 import toast from 'react-hot-toast';
+import { downloadImage } from '../../utils/downloadImage';
 
 // Import Elan Editorial Photos for fallback/curated display
 import elan1 from '../../../Photos/elan/pexels-dhanno-18862319.jpg';
@@ -322,15 +323,14 @@ export default function ProductDetail() {
     toast.success('Temporary photo and preview deleted from server.');
   };
 
-  const handleDownloadResult = () => {
+  const handleDownloadResult = async () => {
     if (!tryOnResult) return;
-    const link = document.createElement('a');
-    link.href = tryOnResult;
-    link.download = `auto-stitch-tryon-${product?.name?.toLowerCase().replace(/\s+/g, '-') || 'garment'}.webp`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Try-on image saved to your device!');
+    try {
+      await downloadImage(tryOnResult, `auto-stitch-tryon-${product?.name?.toLowerCase().replace(/\s+/g, '-') || 'garment'}`);
+      toast.success('Try-on image saved to your device!');
+    } catch {
+      toast.error('Could not save the image. Please try again.');
+    }
   };
 
   const handleReviewSubmit = async (e) => {
@@ -459,7 +459,7 @@ export default function ProductDetail() {
           {/* Left: Large Image */}
           <div className="product-image-section">
             <div className="main-editorial-image-wrapper">
-              <img src={productImages[currentImageIndex] || productImages[0]} alt={product.name} className="main-editorial-image" />
+              <img loading="lazy" decoding="async" src={productImages[currentImageIndex] || productImages[0]} alt={product.name} className="main-editorial-image" />
               {productImages.length > 1 && (
                 <>
                   <button className="pd-image-nav left" onClick={prevImage}><ChevronLeft size={24} /></button>
@@ -750,7 +750,7 @@ export default function ProductDetail() {
             <div className="vto-modal-body">
               {/* Product Brief Banner */}
               <div className="vto-product-badge">
-                <img src={productImages[0]} alt={product.name} className="vto-badge-thumb" />
+                <img loading="lazy" decoding="async" src={productImages[0]} alt={product.name} className="vto-badge-thumb" />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p className="vto-badge-name">{product.name}</p>
                   <p className="vto-badge-meta">
@@ -793,7 +793,7 @@ export default function ProductDetail() {
                   ) : (
                     <div className="vto-preview-box">
                       <div style={{ position: 'relative', width: '100%', height: '280px', borderRadius: '2px', overflow: 'hidden', background: '#111', border: '1px solid #000' }}>
-                        <img src={tryOnPhoto} alt="Your Portrait" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        <img loading="lazy" decoding="async" src={tryOnPhoto} alt="Your Portrait" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         {!tryOnLoading && (
                           <button
                             type="button"
@@ -917,7 +917,7 @@ export default function ProductDetail() {
               <div key={p._id} className="editorial-product-card slider-card">
                 <div className="ep-image-wrap">
                   <Link to={`/products/${p._id}`}>
-                    <img src={p.images?.[0] || elan1} alt={p.name} className="ep-image" />
+                    <img loading="lazy" decoding="async" src={p.images?.[0] || elan1} alt={p.name} className="ep-image" />
                   </Link>
                   <button
                     className="ep-wishlist-btn"
