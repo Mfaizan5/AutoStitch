@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Store, ShieldCheck, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import ReCAPTCHA from 'react-google-recaptcha';
+import TurnstileWidget from '../../components/TurnstileWidget/TurnstileWidget';
 import axios from 'axios';
 import API_URL from '../../config/api';
 import './Auth.css';
@@ -34,7 +34,7 @@ export default function BoutiqueLogin({ onLogin }) {
     }
     setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/api/auth/login`, { ...form, portal: 'boutique', captchaToken: captchaToken || 'bypass-recaptcha' }, {
+      const res = await axios.post(`${API_URL}/api/auth/login`, { ...form, portal: 'boutique', captchaToken }, {
         withCredentials: true
       });
 
@@ -123,17 +123,9 @@ export default function BoutiqueLogin({ onLogin }) {
               </div>
             </div>
 
-            {import.meta.env.VITE_RECAPTCHA_SITE_KEY && (
-              <div className="form-group-v2" style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-                <ReCAPTCHA
-                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                  onChange={(token) => setCaptchaToken(token)}
-                  onExpired={() => setCaptchaToken(null)}
-                />
-              </div>
-            )}
+            <TurnstileWidget onToken={setCaptchaToken} />
 
-            <button type="submit" className="login-submit-btn" disabled={loading}>
+            <button type="submit" className="login-submit-btn" disabled={loading || !captchaToken}>
               {loading ? 'Authenticating...' : 'Enter Dashboard'}
             </button>
           </form>

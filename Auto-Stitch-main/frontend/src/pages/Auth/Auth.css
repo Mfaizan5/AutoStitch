@@ -330,7 +330,7 @@
 }
 
 .login-submit-btn {
-  background: #d8d8d8;
+  background: #000000;
   color: #ffffff;
   border: none;
   padding: 16px; /* Reduced from 18px */
@@ -342,7 +342,12 @@
 }
 
 .login-submit-btn:hover:not(:disabled) {
-  background: #000000;
+  background: #222222;
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .create-account-section {

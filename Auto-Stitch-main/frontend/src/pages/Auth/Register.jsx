@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Sparkles, ArrowRight, Store } from 'lucide-react';
 import { FaGoogle, FaFacebookF } from 'react-icons/fa6';
-import ReCAPTCHA from 'react-google-recaptcha';
+import TurnstileWidget from '../../components/TurnstileWidget/TurnstileWidget';
 import { useGoogleLogin } from '@react-oauth/google';
 import { loginWithFacebook as triggerFBLogin } from '../../utils/fbSDK';
 import Logo from '../../components/Logo/Logo';
@@ -52,7 +52,7 @@ export default function Register({ onLogin }) {
     setLoading(true);
     try {
       const res = await axios.post(`${API_URL}/api/auth/register`,
-        { name: form.name, email: form.email, password: form.password, role: form.role, captchaToken: captchaToken || 'bypass-recaptcha' },
+        { name: form.name, email: form.email, password: form.password, role: form.role, captchaToken },
         { withCredentials: true }
       );
       const data = res.data;
@@ -257,17 +257,9 @@ export default function Register({ onLogin }) {
               </label>
             </div>
 
-            {import.meta.env.VITE_RECAPTCHA_SITE_KEY && (
-              <div className="form-group-v2" style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-                <ReCAPTCHA
-                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                  onChange={(token) => setCaptchaToken(token)}
-                  onExpired={() => setCaptchaToken(null)}
-                />
-              </div>
-            )}
+            <TurnstileWidget onToken={setCaptchaToken} />
 
-            <button type="submit" className="login-submit-btn" disabled={loading}>
+            <button type="submit" className="login-submit-btn" disabled={loading || !captchaToken}>
               {loading ? 'Creating...' : 'Create'}
             </button>
 

@@ -274,7 +274,9 @@ export default function Navbar({ user, wishlistCount = 0, onLogout }) {
             <div className="nav-user-area-v2">
               {user ? (
                 <div className="user-dropdown-trigger-v2">
-                  <User size={22} strokeWidth={1.5} className="nav-icon-btn-v2" />
+                  <span className="nav-icon-btn-v2">
+                    <User size={22} strokeWidth={1.5} />
+                  </span>
                   <div className="user-dropdown-menu-v2">
                     <Link to="/dashboard">Dashboard</Link>
                     <Link to="/bids">Custom Projects & Bids</Link>

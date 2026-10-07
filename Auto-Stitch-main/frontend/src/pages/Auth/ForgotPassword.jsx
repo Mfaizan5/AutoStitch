@@ -30,8 +30,12 @@ export default function ForgotPassword() {
     
     setIsSubmitting(true);
     try {
-      await axios.post(`${API_URL}/api/auth/forgotpassword`, { email, role });
-      toast.success('6-digit OTP sent to your email!');
+      const { data } = await axios.post(`${API_URL}/api/auth/forgotpassword`, { email, role });
+      if (data.devOtp) {
+        toast.success(`Email is not set up yet (demo mode). Your OTP is ${data.devOtp}`, { duration: 20000 });
+      } else {
+        toast.success('6-digit OTP sent to your email!');
+      }
       setStep(2);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to send OTP');

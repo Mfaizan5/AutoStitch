@@ -21,6 +21,8 @@ const registerSchema = z.object({
   role: z.enum(['customer', 'boutique_owner']).optional().default('customer'),
 });
 
+const { verifyTurnstile } = require('../utils/turnstile');
+
 const loginSchema = z.object({
   email: z.string().email('Invalid email address').regex(EMAIL_REGEX, 'Please enter a valid email domain (e.g., .com, .net)').trim().toLowerCase(),
   password: z.string().min(1, 'Password is required'),
@@ -90,6 +92,10 @@ const register = async (req, res) => {
     const { name, email, password, role } = parsed.data;
     const { captchaToken } = req.body;
 
+    if (!(await verifyTurnstile(captchaToken, req.ip))) {
+      return res.status(400).json({ success: false, message: 'Security check failed. Please complete the verification and try again.' });
+    }
+
     // Verify reCAPTCHA if configured
     if (process.env.RECAPTCHA_SECRET_KEY && captchaToken && captchaToken !== 'bypass-recaptcha') {
       try {
@@ -150,6 +156,10 @@ const login = async (req, res) => {
     }
     const { email, password, portal } = parsed.data;
     const { captchaToken } = req.body;
+
+    if (!(await verifyTurnstile(captchaToken, req.ip))) {
+      return res.status(400).json({ success: false, message: 'Security check failed. Please complete the verification and try again.' });
+    }
 
     // Verify reCAPTCHA if configured
     if (process.env.RECAPTCHA_SECRET_KEY && captchaToken && captchaToken !== 'bypass-recaptcha') {
@@ -619,11 +629,16 @@ const forgotPassword = async (req, res) => {
     `;
 
     try {
-      await sendEmail({
+      const mailResult = await sendEmail({
         email: user.email,
         subject: 'Password Reset OTP - Auto Stitch',
         html,
       });
+
+      if (mailResult && mailResult.delivered === false) {
+        // Development only (no mail account configured): hand the OTP to the client
+        return res.status(200).json({ success: true, message: 'Email is not configured on this server (development mode).', devOtp: otp });
+      }
 
       res.status(200).json({ success: true, message: 'OTP sent to your email' });
     } catch (err) {

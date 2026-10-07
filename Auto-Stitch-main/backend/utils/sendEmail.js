@@ -1,6 +1,13 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
+  // No mail account configured: in development, skip sending instead of failing,
+  // and tell the caller so it can show the content (e.g. the OTP) another way.
+  if ((!process.env.EMAIL_USER || !process.env.EMAIL_PASS) && process.env.NODE_ENV !== 'production') {
+    console.warn(`[SMTP] EMAIL_USER / EMAIL_PASS not set. Skipped email to ${options.email}: "${options.subject}"`);
+    return { delivered: false };
+  }
+
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -20,6 +27,7 @@ const sendEmail = async (options) => {
 
   const info = await transporter.sendMail(mailOptions);
   console.log(`[SMTP] Email sent successfully! MessageId: ${info.messageId}`);
+  return { delivered: true };
 };
 
 module.exports = sendEmail;
